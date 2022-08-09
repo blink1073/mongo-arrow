@@ -129,60 +129,12 @@ def append_arrow_flags(module):
     import numpy as np
     import pyarrow as pa
 
-    if IS_WIN:
-        module.include_dirs.append(np.get_include())
-        module.include_dirs.append(pa.get_include())
-    else:
-        module.extra_compile_args.append("-isystem" + pa.get_include())
-        module.extra_compile_args.append("-isystem" + np.get_include())
-        # Arrow's manylinux{2010, 2014} binaries are built with gcc < 4.8 which predates CXX11 ABI
-        # - https://uwekorn.com/2019/09/15/how-we-build-apache-arrows-manylinux-wheels.html
-        # - https://arrow.apache.org/docs/python/extending.html#example
-        if "std=" not in os.environ.get("CXXFLAGS", ""):
-            module.extra_compile_args.append("-std=c++11")
-            module.extra_compile_args.append("-D_GLIBCXX_USE_CXX11_ABI=0")
-
-    # Handle the arrow library files manually.
-    # Alternative to using pyarrow.create_library_symlinks().
-    # You can use MONGO_LIBARROW_DIR to explicitly set the location of the
-    # arrow libraries (for instance in a conda build).
-    # We first check for an unmodified path to the library,
-    # then look for a library file with a version modifier, e.g. libarrow.600.dylib.
-    arrow_lib = os.environ.get("MONGO_LIBARROW_DIR", pa.get_library_dirs()[0])
-    if platform == "darwin":
-        exts = [".dylib", ".*.dylib"]
-    elif platform == "linux":
-        exts = [".so", ".so.*"]
-    else:
-        # Windows is handled differently (see below)
-        pass
-
-    # Find the appropriate library file and optionally copy it locally.
-    # Explicitly handle "parquet" library as a workaround for
-    # https://issues.apache.org/jira/browse/ARROW-17327
-    for name in pa.get_libraries() + ["parquet"]:
-        if IS_WIN:
-            if COPY_LIBARROW:
-                lib_file = os.path.join(arrow_lib, f"{name}.dll")
-                if not os.path.exists(lib_file):
-                    if name == "parquet":
-                        continue
-                    raise ValueError("Could not find compiled arrow library")
-                shutil.copy(lib_file, BUILD_DIR)
-            lib_file = os.path.join(arrow_lib, f"{name}.lib")
-            module.extra_link_args.append(lib_file)
-            continue
-
-        for ext in exts:
-            files = glob.glob(os.path.join(arrow_lib, f"lib{name}{ext}"))
-            if not files:
-                continue
-            path = files[0]
-            if COPY_LIBARROW:
-                shutil.copy(path, BUILD_DIR)
-                path = os.path.join(BUILD_DIR, os.path.basename(path))
-            module.extra_link_args.append(path)
-            break
+    # Use same approach as upstream Cython test.
+    # https://github.com/apache/arrow/blob/cc9b89a04143446482d66d4c35bfdf2312d90a05/python/pyarrow/tests/test_cython.py#L54
+    module.include_dirs.append(np.get_include())
+    module.include_dirs.append(pa.get_include())
+    module.libraries.extend(pa.get_libraries())
+    module.library_dirs.extend(pa.get_library_dirs())
 
 
 def get_extension_modules():
