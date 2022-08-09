@@ -144,6 +144,13 @@ def append_arrow_flags(module):
     module.library_dirs.extend(pa.get_library_dirs())
     module.extra_compile_args.extend(compiler_opts)
 
+    if platform == "win32":
+        delim, var = ";", "PATH"
+    else:
+        delim, var = ":", "LD_LIBRARY_PATH"
+
+    os.environ[var] = delim.join(pa.get_library_dirs() + [os.environ.get(var, "")])
+
 
 def get_extension_modules():
     # This change is needed in order to allow setuptools to import the
