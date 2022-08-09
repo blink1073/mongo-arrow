@@ -131,10 +131,18 @@ def append_arrow_flags(module):
 
     # Use same approach as upstream Cython test.
     # https://github.com/apache/arrow/blob/cc9b89a04143446482d66d4c35bfdf2312d90a05/python/pyarrow/tests/test_cython.py#L54
+    if os.name == "posix":
+        compiler_opts = ["-std=c++11"]
+    elif os.name == "nt":
+        compiler_opts = ["-D_ENABLE_EXTENDED_ALIGNED_STORAGE"]
+    else:
+        compiler_opts = []
+
     module.include_dirs.append(np.get_include())
     module.include_dirs.append(pa.get_include())
     module.libraries.extend(pa.get_libraries())
     module.library_dirs.extend(pa.get_library_dirs())
+    module.extra_compile_args.extend(compiler_opts)
 
 
 def get_extension_modules():
@@ -149,13 +157,6 @@ def get_extension_modules():
     for module in modules:
         append_libbson_flags(module)
         append_arrow_flags(module)
-        # # Ensure our Cython extension can dynamically link to libraries
-        # # - https://blog.krzyzanowskim.com/2018/12/05/rpath-what/
-        # # - https://nehckl0.medium.com/creating-relocatable-linux-executables-by-setting-rpath-with-origin-45de573a2e98
-        # if platform == "darwin":
-        #     module.extra_link_args += ["-rpath", "@loader_path"]
-        # elif platform == "linux":
-        #     module.extra_link_args += ["-Wl,-rpath,$ORIGIN"]
 
     return modules
 
