@@ -149,13 +149,13 @@ def get_extension_modules():
     for module in modules:
         append_libbson_flags(module)
         append_arrow_flags(module)
-        # Ensure our Cython extension can dynamically link to libraries
-        # - https://blog.krzyzanowskim.com/2018/12/05/rpath-what/
-        # - https://nehckl0.medium.com/creating-relocatable-linux-executables-by-setting-rpath-with-origin-45de573a2e98
-        if platform == "darwin":
-            module.extra_link_args += ["-rpath", "@loader_path"]
-        elif platform == "linux":
-            module.extra_link_args += ["-Wl,-rpath,$ORIGIN"]
+        # # Ensure our Cython extension can dynamically link to libraries
+        # # - https://blog.krzyzanowskim.com/2018/12/05/rpath-what/
+        # # - https://nehckl0.medium.com/creating-relocatable-linux-executables-by-setting-rpath-with-origin-45de573a2e98
+        # if platform == "darwin":
+        #     module.extra_link_args += ["-rpath", "@loader_path"]
+        # elif platform == "linux":
+        #     module.extra_link_args += ["-Wl,-rpath,$ORIGIN"]
 
     return modules
 
