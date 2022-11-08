@@ -14,6 +14,7 @@
 
 import traceback
 import warnings
+import os
 
 # We must import pyarrow before attempting to load the Cython module.
 import pyarrow  # noqa: F401
@@ -27,6 +28,10 @@ except ImportError:
     def _parse_version(version):
         return _LooseVersion(version)
 
+if os.name == 'nt':
+    # Delvewheel puts the library files in a sibling directory.
+    here = os.path.abspath(os.path.dirname(__file__))
+    os.add_dll_directory(os.path.join(os.path.dirname(here), 'pymongoarrow.libs'))
 
 try:
     from pymongoarrow.lib import libbson_version
