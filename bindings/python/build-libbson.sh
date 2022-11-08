@@ -59,6 +59,6 @@ pushd "$WORKDIR"
     fi
     cmake --build . --target clean
     cmake --build .
-    cmake --build . --target install
+    cmake --build . --target install --config ${CMAKE_BUILD_TYPE}
   popd
 popd
