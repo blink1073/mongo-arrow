@@ -61,15 +61,7 @@ def append_os_variable(name, extra_path):
 if os.name == "nt":
     append_os_variable("PATH", extra_path)
     run([sys.executable, "-m", "pip", "install", "delvewheel"])
-    # Do not mangle ucrtbased.dll to avoid:
-    # "RuntimeError: Unable to rename the dependencies of vcruntime140d.dll
-    # because this DLL has trailing data. If this DLL was created with MinGW,
-    # run the strip utility. Otherwise, include ucrtbased.dll in the
-    # --no-mangle flag. In addition, if you believe that delvewheel should
-    # avoid name-mangling a specific DLL by default, open an issue at
-    # https://github.com/adang1345/delvewheel/issues and include this error
-    # message."
-    run(["delvewheel", "repair", "--no-mangle", "ucrtbased.dll", "-w", wheel_dir, wheel_file])
+    run(["delvewheel", "repair", "-w", wheel_dir, wheel_file])
 
 elif sys.platform == "darwin":
     # FIXME: We should not have to do this.
