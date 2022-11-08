@@ -59,9 +59,9 @@ def append_os_variable(name, extra_path):
 
 
 if os.name == "nt":
-    #append_os_variable("PATH", extra_path)
-    #run([sys.executable, "-m", "pip", "install", "delvewheel"])
-    #run(["delvewheel", "repair", "-w", wheel_dir, wheel_file])
+    append_os_variable("PATH", extra_path)
+    run([sys.executable, "-m", "pip", "install", "delvewheel"])
+    run(["delvewheel", "repair", "-w", wheel_dir, wheel_file, "-L", ""])
 
 elif sys.platform == "darwin":
     # FIXME: We should not have to do this.
