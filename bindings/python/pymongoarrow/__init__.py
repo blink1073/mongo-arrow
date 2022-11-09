@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import os
 import traceback
 import warnings
 
@@ -28,9 +27,6 @@ except ImportError:
     def _parse_version(version):
         return _LooseVersion(version)
 
-
-if os.name == "nt":
-    [os.add_dll_directory(p) for p in pyarrow.get_library_dirs()]
 
 try:
     from pymongoarrow.lib import libbson_version
