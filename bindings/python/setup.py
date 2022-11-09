@@ -139,7 +139,7 @@ def append_arrow_flags(ext):
     ext.library_dirs.extend(pa.get_library_dirs())
 
     if os.name == "posix":
-        ext.extra_compile_args.append("-std=c++17")
+        ext.extra_compile_args.append("-std=c++11")
 
 
 def get_extension_modules():

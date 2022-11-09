@@ -81,13 +81,13 @@ jobs:
           bash ./build-libbson.sh
           python -m build --sdist .
 
-      # - name: Test Sdist
-      #   working-directory: ./bindings/python
-      #   run: |
-      #     export LIBBSON_INSTALL_DIR="$(pwd)/libbson"
-      #     python -m pip install dist/*.gz
-      #     cd ..
-      #     python -c "from pymongoarrow.lib import process_bson_stream"
+      - name: Test Sdist
+        working-directory: ./bindings/python
+        run: |
+          export LIBBSON_INSTALL_DIR="$(pwd)/libbson"
+          python -m pip install dist/*.gz
+          cd ..
+          python -c "from pymongoarrow.lib import process_bson_stream"
 
       - uses: actions/upload-artifact@v2
         with:
