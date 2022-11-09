@@ -77,7 +77,7 @@ jobs:
         working-directory: ./bindings/python
         run: |
           python -m pip install -U pip build
-          export LIBBSON_INSTALL_DIR="$(pwd)/libbson"
+          set LIBBSON_INSTALL_DIR="$(pwd)/libbson"
           bash ./build-libbson.sh
           python -m build --sdist .
 
