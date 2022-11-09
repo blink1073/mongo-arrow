@@ -11,15 +11,6 @@ HERE = os.path.abspath(os.path.dirname(__file__))
 BUILD_DIR = os.path.join(HERE, "pymongoarrow")
 IS_WIN = platform == "win32"
 
-# Find and copy the binary arrow files, unless
-# MONGO_NO_COPY_ARROW_LIB is set (for instance in a conda build).
-# Wheels are meant to be self-contained, per PEP 513.
-# https://www.python.org/dev/peps/pep-0513/#id40
-# Conda has the opposite philosphy, where libraries are meant to be
-# shared.  For instance, there is an arrow-cpp library available on conda-forge
-# that provides the libarrow files.
-COPY_LIBARROW = not os.environ.get("MONGO_NO_COPY_LIBARROW", True)
-
 # Find and copy the binary libbson file, unless
 # MONGO_NO_COPY_LIBBSON is set (for instance in a conda build).
 COPY_LIBBSON = not os.environ.get("MONGO_NO_COPY_LIBBSON", False)
@@ -47,6 +38,7 @@ def append_libbson_flags(module):
     install_dir = os.environ.get("LIBBSON_INSTALL_DIR")
     if install_dir:
         install_dir = os.path.abspath(install_dir)
+
         # Handle the copy-able library file if applicable.
         if COPY_LIBBSON:
             if platform == "darwin":
@@ -61,6 +53,14 @@ def append_libbson_flags(module):
                 lib_file = os.path.join(lib_dir[0], lib_file)
                 if os.path.exists(lib_file):
                     shutil.copy(lib_file, BUILD_DIR)
+
+            # Ensure our Cython extension can dynamically link to libraries
+            # - https://blog.krzyzanowskim.com/2018/12/05/rpath-what/
+            # - https://nehckl0.medium.com/creating-relocatable-linux-executables-by-setting-rpath-with-origin-45de573a2e98
+            if platform == "darwin":
+                module.extra_link_args += ["-rpath", "@loader_path"]
+            elif platform == "linux":
+                module.extra_link_args += ["-Wl,-rpath,$ORIGIN"]
 
         # Find the linkable library file, and explicity add it to the linker if on Windows.
         lib_dirs = glob.glob(os.path.join(install_dir, "lib*"))
@@ -126,20 +126,32 @@ def append_libbson_flags(module):
 
 
 def append_arrow_flags(ext):
-    # The Numpy C headers are currently required
     import numpy as np
     import pyarrow as pa
 
-    if os.name != "nt":
-        pa.create_library_symlinks()
-
+    # From https://arrow.apache.org/docs/python/integration/extending.html#example
+    # The Numpy C headers are currently required
     ext.include_dirs.append(np.get_include())
     ext.include_dirs.append(pa.get_include())
     ext.libraries.extend(pa.get_libraries())
     ext.library_dirs.extend(pa.get_library_dirs())
 
+    if os.name != "nt":
+        # On Linux and MacOS, we must run pyarrow.create_library_symlinks()
+        # as a user with write access to the directory where pyarrow is
+        # installed.
+        # See https://arrow.apache.org/docs/python/integration/extending.html#building-extensions-against-pypi-wheels.
+        pa.create_library_symlinks()
+
     if os.name == "posix":
         ext.extra_compile_args.append("-std=c++11")
+
+    # Arrow's manylinux{2010, 2014} binaries are built with gcc < 4.8 which predates CXX11 ABI
+    # - https://uwekorn.com/2019/09/15/how-we-build-apache-arrows-manylinux-wheels.html
+    # - https://arrow.apache.org/docs/python/extending.html#example
+    if "std=" not in os.environ.get("CXXFLAGS", ""):
+        ext.extra_compile_args.append("-std=c++11")
+        ext.extra_compile_args.append("-D_GLIBCXX_USE_CXX11_ABI=0")
 
 
 def get_extension_modules():
@@ -154,13 +166,6 @@ def get_extension_modules():
     for module in modules:
         append_libbson_flags(module)
         append_arrow_flags(module)
-        # Ensure our Cython extension can dynamically link to libraries
-        # - https://blog.krzyzanowskim.com/2018/12/05/rpath-what/
-        # - https://nehckl0.medium.com/creating-relocatable-linux-executables-by-setting-rpath-with-origin-45de573a2e98
-        if platform == "darwin":
-            module.extra_link_args += ["-rpath", "@loader_path"]
-        elif platform == "linux":
-            module.extra_link_args += ["-Wl,-rpath,$ORIGIN"]
 
     return modules
 

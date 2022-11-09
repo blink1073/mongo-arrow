@@ -14,7 +14,7 @@
 
 # Cython compiler directives
 # cython: language_level=3
-# distutils: language=c++
+# distutils: language=c
 from libc.stdint cimport int32_t, uint8_t
 from pyarrow.lib cimport *
 from pyarrow.includes.libarrow cimport (CStatus, CMemoryPool)  # noqa: E211
