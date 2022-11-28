@@ -27,7 +27,7 @@ jobs:
         # Github Actions doesn't support pairing matrix values together, let's improvise
         # https://github.com/github/feedback/discussions/7835#discussioncomment-1769026
         buildplat:
-        - [ubuntu-20.04, manylinux_x86_64]
+        - [ubuntu-20.04, manylinux_*]
         - [macos-11, macosx_*]
         - [windows-2019, win_amd64]
         python: ["cp37", "cp38", "cp39", "cp310"]
@@ -96,7 +96,7 @@ jobs:
       - uses: actions/upload-artifact@v3
         with:
           name: "sdist"
-          path: ./bindings/python/wheelhouse/*.tar.gz
+          path: ./bindings/python/dist/*.tar.gz
 
   collect-dist:
     runs-on: ubuntu-latest
